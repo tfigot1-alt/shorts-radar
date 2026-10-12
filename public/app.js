@@ -694,7 +694,7 @@ VIEWS.settings = async (v) => {
         <li><a class="acc" href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud 콘솔</a>에서 프로젝트 생성</li>
         <li><a class="acc" href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">YouTube Data API v3</a> 사용 설정</li>
         <li>사용자 인증 정보 → API 키 만들기 → 아래에 붙여넣기</li>
-        <li>(권장) 키 제한: HTTP 리퍼러 <code>${esc(location.origin + location.pathname.replace(/[^/]*$/, ''))}*</code></li>
+        <li>(권장) 키 제한: HTTP 리퍼러 <code>${esc(location.origin)}/*</code></li>
       </ol>
       <div class="row"><input id="sKey" type="password" value="${esc(st.apiKey)}" placeholder="AIza…" style="flex:1;min-width:200px"><button class="btn pri" id="sKeySave">저장 및 테스트</button></div>
       <p class="small muted">하루 무료 할당량 10,000 유닛 · 검색 1회 100 유닛, 채널/영상 조회 50개당 1 유닛</p></div>

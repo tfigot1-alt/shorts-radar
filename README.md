@@ -21,7 +21,7 @@ YouTube Data API v3로 직접 데이터를 모으는 쇼츠 채널 발굴 도구
 1. https://console.cloud.google.com 에서 프로젝트 생성
 2. 'YouTube Data API v3' 사용 설정
 3. 사용자 인증 정보 → API 키 만들기
-4. (권장) 키 제한 → HTTP 리퍼러 `https://tfigot1-alt.github.io/shorts-radar/*`, `http://localhost:5178/*`
+4. (권장) 키 제한 → HTTP 리퍼러 `https://tfigot1-alt.github.io/*`, `http://localhost:5178/*` (브라우저가 리퍼러로 도메인만 보내므로 경로 없이 도메인 단위로 지정)
 
 하루 10,000 유닛 무료입니다. 검색 1회는 100 유닛이고, 채널·영상 조회는 50개당 1 유닛입니다.
 
