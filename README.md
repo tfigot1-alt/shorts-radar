@@ -2,7 +2,13 @@
 
 YouTube Data API v3로 직접 데이터를 모으는 쇼츠 채널 발굴 도구입니다. 구독, 결제, 기능 제한이 전혀 없습니다.
 
-## 실행
+## 바로 사용
+
+👉 **https://tfigot1-alt.github.io/shorts-radar/** — 설치 없이 브라우저에서 바로 사용 (설정에서 본인 API 키 입력)
+
+`main` 브랜치에 push하면 GitHub Actions가 `public` 폴더를 자동으로 배포합니다.
+
+## 내 컴퓨터에서 실행
 
 1. [Node.js](https://nodejs.org) 설치 (이미 있으면 생략)
 2. `start.bat` 더블클릭 (또는 터미널에서 `node server.js`)
@@ -15,7 +21,7 @@ YouTube Data API v3로 직접 데이터를 모으는 쇼츠 채널 발굴 도구
 1. https://console.cloud.google.com 에서 프로젝트 생성
 2. 'YouTube Data API v3' 사용 설정
 3. 사용자 인증 정보 → API 키 만들기
-4. (권장) 키 제한 → HTTP 리퍼러 `http://localhost:5178/*`
+4. (권장) 키 제한 → HTTP 리퍼러 `https://tfigot1-alt.github.io/shorts-radar/*`, `http://localhost:5178/*`
 
 하루 10,000 유닛 무료입니다. 검색 1회는 100 유닛이고, 채널·영상 조회는 50개당 1 유닛입니다.
 
