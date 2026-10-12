@@ -814,6 +814,9 @@ document.addEventListener('mouseout', e => {
   th.querySelector('iframe')?.remove();
 });
 
+// 깨진 이미지(채널 아바타 등)는 깨진 아이콘 대신 빈 원으로 표시
+document.addEventListener('error', e => { if (e.target.tagName === 'IMG') e.target.style.visibility = 'hidden'; }, true);
+
 window.addEventListener('hashchange', render);
 renderFoot();
 render();
