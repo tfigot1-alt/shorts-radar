@@ -68,7 +68,17 @@ const ptDay = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_An
 const REGIONS = { KR: '한국', US: '미국', JP: '일본', GB: '영국', IN: '인도', BR: '브라질', ID: '인도네시아', VN: '베트남', TH: '태국', TW: '대만', DE: '독일', FR: '프랑스' };
 const LANGS = { KR: 'ko', US: 'en', JP: 'ja', GB: 'en', IN: 'hi', BR: 'pt', ID: 'id', VN: 'vi', TH: 'th', TW: 'zh-Hant', DE: 'de', FR: 'fr' };
 const CATS = { '': '전체 카테고리', 1: '영화/애니메이션', 2: '자동차', 10: '음악', 15: '동물', 17: '스포츠', 19: '여행/이벤트', 20: '게임', 22: '인물/블로그', 23: '코미디', 24: '엔터테인먼트', 25: '뉴스/정치', 26: '노하우/스타일', 27: '교육', 28: '과학기술', 29: '비영리/사회운동' };
+// 이야기 테마: YouTube 공식 카테고리에 없는 장르를 키워드(OR 검색)로 찾음. re는 추적 DB에서 채널명으로 거를 때 사용
+const THEMES = {
+  story: { label: '📖 썰·사연 (전체)', q: '썰|사연|실화|썰툰|썰풀이', re: /썰|사연|실화|이야기/ },
+  'story-horror': { label: '👻 공포·괴담 썰', q: '괴담|공포썰|무서운이야기|실화괴담', re: /괴담|공포|무서운|미스터리/ },
+  'story-love': { label: '💕 연애·커플 썰', q: '연애썰|커플썰|썸썰|이별썰', re: /연애|커플|썸|이별/ },
+  'story-work': { label: '💼 직장·알바 썰', q: '직장썰|알바썰|회사썰|진상썰', re: /직장|알바|회사|진상/ },
+  'story-school': { label: '🏫 학교·군대 썰', q: '학교썰|군대썰|학창시절썰', re: /학교|군대|학창/ },
+  'story-cider': { label: '🥤 사이다·참교육', q: '사이다썰|참교육|사이다사연', re: /사이다|참교육/ },
+};
 const opts = (map, sel) => Object.entries(map).map(([k, v]) => `<option value="${k}"${String(k) === String(sel) ? ' selected' : ''}>${esc(v)}</option>`).join('');
+const catOpts = sel => `<option value="">전체 카테고리</option><optgroup label="YouTube 카테고리">${opts(Object.fromEntries(Object.entries(CATS).filter(([k]) => k)), sel)}</optgroup><optgroup label="이야기 테마">${opts(Object.fromEntries(Object.entries(THEMES).map(([k, t]) => [k, t.label])), sel)}</optgroup>`;
 
 // ───────────────────────── YouTube API ─────────────────────────
 const COST = { search: 100 };
@@ -152,6 +162,8 @@ async function fetchChannels(ids, { force = false } = {}) {
 
 // 쇼츠 검색: search.list → videos.list → channels.list
 async function searchShorts({ q, region, after, order = 'viewCount', cat, pageToken }) {
+  const theme = THEMES[cat];
+  if (theme) { q = [q, theme.q].filter(Boolean).join(' '); cat = undefined; }
   const j = await yt('search', {
     part: 'id', type: 'video', videoDuration: 'short', maxResults: 50, order, q,
     regionCode: region, relevanceLanguage: LANGS[region], publishedAfter: after ? new Date(after).toISOString() : undefined,
@@ -391,7 +403,7 @@ VIEWS.daily = async (v, _, alive) => {
   <div class="filters">
     <div class="f"><label>국가</label><select id="dRegion">${opts(REGIONS, s.region)}</select></div>
     <div class="f"><label>업로드 기간</label><select id="dHours">${opts({ 24: '24시간', 48: '48시간', 72: '3일', 168: '7일' }, s.hours)}</select></div>
-    <div class="f"><label>카테고리</label><select id="dCat">${opts(CATS, s.cat)}</select></div>
+    <div class="f"><label>카테고리</label><select id="dCat">${catOpts(s.cat)}</select></div>
     <div class="f"><label>키워드 (선택)</label><input id="dQ" value="${esc(s.q)}" placeholder="예: 요리, 고양이"></div>
     <div class="f"><label>최소 조회수</label><input id="dMin" type="number" step="10000" value="${s.min}"></div>
     <div class="f"><label>정렬</label><select id="dSort">${opts({ views: '조회수순', vph: '시간당 조회순', ratio: '평소 대비 배수순' }, s.sort)}</select></div>
@@ -409,8 +421,9 @@ const exState = { scope: 'db', q: '', region: null, period: 30, cat: '', minSubs
 VIEWS.explore = async (v, _, alive) => {
   const s = exState; s.region ??= DB.settings.region;
   const draw = () => {
+    const theme = s.scope === 'db' && THEMES[s.cat];
     const pool = s.scope === 'db' ? Object.values(DB.channels) : s.found.map(id => DB.channels[id]);
-    let list = pool.filter(c => c && c.t && c.s.length).map(c => ({ c, h: honey(c), vpd: viewsPerDay(c), g: growth(c, 24), sub: lastSnap(c)[1] }))
+    let list = pool.filter(c => c && c.t && c.s.length && (!theme || theme.re.test(c.t))).map(c => ({ c, h: honey(c), vpd: viewsPerDay(c), g: growth(c, 24), sub: lastSnap(c)[1] }))
       .filter(x => (s.minSubs === '' || x.sub >= +s.minSubs) && (s.maxSubs === '' || x.sub <= +s.maxSubs)
         && (s.maxAge === '' || ageDays(x.c.pub) <= +s.maxAge) && (s.minScore === '' || x.h >= +s.minScore));
     const key = { honey: x => x.h, subs: x => x.sub, vpd: x => x.vpd, d24: x => x.g ? x.g.views : -1, young: x => -ageDays(x.c.pub), ratio: x => chAvg(x.c) / Math.max(x.sub, 100) }[s.sort];
@@ -448,7 +461,7 @@ VIEWS.explore = async (v, _, alive) => {
     <div class="f" style="flex:1;min-width:200px"><label>키워드 / 채널 URL / @핸들</label><input id="exQ" value="${esc(s.q)}" placeholder="예: 썰, 동물, @handle"></div>
     <div class="f"><label>국가</label><select id="exRegion">${opts(REGIONS, s.region)}</select></div>
     <div class="f"><label>영상 기간</label><select id="exPeriod">${opts({ 7: '7일', 30: '30일', 90: '90일', 365: '1년' }, s.period)}</select></div>
-    <div class="f"><label>카테고리</label><select id="exCat">${opts(CATS, s.cat)}</select></div>
+    <div class="f"><label>카테고리</label><select id="exCat">${catOpts(s.cat)}</select></div>
     <button class="btn pri" id="exGo">검색 (100 유닛)</button>
   </div>
   <div class="filters">
@@ -461,7 +474,7 @@ VIEWS.explore = async (v, _, alive) => {
   const sync = () => Object.assign(s, { scope: $('#exScope').value, q: $('#exQ').value.trim(), region: $('#exRegion').value, period: +$('#exPeriod').value, cat: $('#exCat').value, minSubs: $('#exMinS').value, maxSubs: $('#exMaxS').value, maxAge: $('#exAge').value, minScore: $('#exScore').value, sort: $('#exSort').value });
   $('#exGo').onclick = () => { sync(); go(false); };
   $('#exQ').onkeydown = e => { if (e.key === 'Enter') { sync(); go(false); } };
-  ['#exScope', '#exMinS', '#exMaxS', '#exAge', '#exScore', '#exSort'].forEach(id => $(id).onchange = () => { sync(); draw(); });
+  ['#exScope', '#exCat', '#exMinS', '#exMaxS', '#exAge', '#exScore', '#exSort'].forEach(id => $(id).onchange = () => { sync(); draw(); });
   draw();
 };
 
